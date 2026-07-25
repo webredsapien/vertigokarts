@@ -1,0 +1,1546 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>VertiGoKarts · Manizales</title>
+    <!-- Meta Pixel Code -->
+    <script>
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', '1016160954496720');
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+        src="https://www.facebook.com/tr?id=1016160954496720&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Meta Pixel Code -->
+
+    <!-- OPEN GRAPH / SEO -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vertigokarts.redsapien.com/"> 
+    <meta property="og:site_name" content="VertiGo Karts">
+    <meta property="og:title" content="Perfecto para familia y amigos 🏁">
+    <meta property="og:description" content="Llegó a Manizales y Villamaría la pista de Go Karts más pro, haz clic y agenda.">
+    <meta property="og:image" content="https://github.com/redsapien/vertigokarts/blob/e93855b16c66f1bcf946484e295c217901db92b8/Image/Logo-vertigokarts.webp?raw=true">
+    <meta property="og:image:secure_url" content="https://github.com/redsapien/vertigokarts/blob/e93855b16c66f1bcf946484e295c217901db92b8/Image/Logo-vertigokarts.webp?raw=true">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="VertiGo Karts">
+    <meta property="og:image:type" content="image/webp">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Perfecto para familia y amigos 🏁">
+    <meta name="twitter:description" content="Llegó a Manizales y Villamaría la pista de Go Karts más pro, haz clic y agenda.">
+    <meta name="twitter:image" content="https://github.com/redsapien/vertigokarts/blob/e93855b16c66f1bcf946484e295c217901db92b8/Image/Logo-vertigokarts.webp?raw=true">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+    <style>
+        /* ===== VARIABLES Y RESET ===== */
+        :root {
+            --color-primary: #FF4500;
+            --color-dark: #0A0A0A;
+            --color-light: #FFFFFF;
+            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --radius-full: 9999px;
+            --z-modal: 9999;
+            --neon-glow: 0 0 15px rgba(255, 69, 0, 0.3), 0 0 30px rgba(255, 69, 0, 0.1);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; background: var(--color-dark); }
+        body {
+            font-family: var(--font-main);
+            background: var(--color-dark);
+            color: var(--color-light);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            position: relative;
+        }
+        #app {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity 0.8s ease 0.2s;
+            background: var(--color-dark);
+        }
+        #app.visible { opacity: 1; }
+
+        /* ===== PRELOADER RESPONSIVO ===== */
+        #preloader {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: var(--color-dark);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.7s ease, transform 0.7s ease, visibility 0.7s ease;
+            animation: engineRumble 0.15s infinite alternate ease-in-out;
+            padding: 16px;
+        }
+        #preloader.hidden {
+            opacity: 0;
+            transform: scale(1.05);
+            visibility: hidden;
+            pointer-events: none;
+        }
+        @keyframes engineRumble {
+            0% { transform: translate(-1px, -1px) scale(1.002); }
+            25% { transform: translate(1px, 0px) scale(0.998); }
+            50% { transform: translate(-1px, 1px) scale(1.001); }
+            75% { transform: translate(1px, -1px) scale(0.999); }
+            100% { transform: translate(0px, 0px) scale(1); }
+        }
+        .preloader-content {
+            text-align: center;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        .preloader-logo {
+            font-size: clamp(1.6rem, 8vw, 5.6rem);
+            font-weight: 900;
+            letter-spacing: clamp(2px, 0.4vw, 6px);
+            text-transform: uppercase;
+            color: var(--color-light);
+            display: inline-block;
+            animation: exhaustFlicker 0.6s infinite alternate;
+            line-height: 1.2;
+            word-break: break-word;
+            max-width: 90vw;
+        }
+        .preloader-logo .highlight { color: var(--color-primary); position: relative; }
+        .preloader-logo .highlight::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 2px;
+            width: 100%;
+            height: clamp(2px, 0.3vw, 4px);
+            background: var(--color-primary);
+            border-radius: 4px;
+            filter: blur(2px);
+            animation: glowLine 0.8s infinite alternate;
+        }
+        @keyframes glowLine {
+            0% { opacity: 0.3; transform: scaleX(0.8); }
+            100% { opacity: 1; transform: scaleX(1); }
+        }
+        @keyframes exhaustFlicker {
+            0% { text-shadow: 0 0 10px rgba(255, 69, 0, 0.2), 0 0 30px rgba(255, 69, 0, 0.05); transform: scale(1); }
+            100% { text-shadow: 0 0 30px rgba(255, 69, 0, 0.5), 0 0 80px rgba(255, 69, 0, 0.15); transform: scale(1.01); }
+        }
+        .preloader-wheel {
+            width: clamp(60px, 15vw, 110px);
+            height: clamp(60px, 15vw, 110px);
+            border: clamp(4px, 0.6vw, 6px) solid var(--color-dark);
+            border-top: clamp(4px, 0.6vw, 6px) solid var(--color-primary);
+            border-right: clamp(4px, 0.6vw, 6px) solid var(--color-primary);
+            border-radius: 50%;
+            margin: 0 auto clamp(12px, 3vw, 28px);
+            animation: wheelSpin 0.9s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite,
+                wheelPulse 0.6s ease-in-out infinite alternate;
+            box-shadow: 0 0 clamp(20px, 5vw, 50px) rgba(255, 69, 0, 0.15), inset 0 0 clamp(10px, 2vw, 30px) rgba(255, 69, 0, 0.05);
+            position: relative;
+            flex-shrink: 0;
+        }
+        .preloader-wheel::before {
+            content: '';
+            position: absolute;
+            inset: clamp(-8px, -1.2vw, -12px);
+            border-radius: 50%;
+            border: clamp(1px, 0.2vw, 2px) dashed rgba(255, 69, 0, 0.2);
+            animation: wheelSpin 3s linear infinite reverse;
+        }
+        .preloader-wheel::after {
+            content: '⚡';
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1.2rem, 4vw, 2.2rem);
+            color: var(--color-primary);
+            animation: sparkFade 0.5s infinite alternate;
+        }
+        @keyframes wheelSpin { to { transform: rotate(360deg); } }
+        @keyframes wheelPulse {
+            0% { box-shadow: 0 0 clamp(10px, 2vw, 20px) rgba(255, 69, 0, 0.1); }
+            100% { box-shadow: 0 0 clamp(30px, 6vw, 60px) rgba(255, 69, 0, 0.3); }
+        }
+        @keyframes sparkFade {
+            0% { opacity: 0.4; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.1); }
+        }
+
+        @media (max-width: 360px) {
+            .preloader-wheel { width: 50px; height: 50px; border-width: 3px; }
+            .preloader-wheel::after { font-size: 1rem; }
+            .preloader-logo { font-size: 1.2rem; letter-spacing: 1px; }
+        }
+        @media (min-width: 768px) {
+            .preloader-wheel { width: 100px; height: 100px; }
+            .preloader-logo { font-size: 4rem; letter-spacing: 5px; }
+        }
+        @media (min-width: 1400px) {
+            .preloader-wheel { width: 120px; height: 120px; }
+            .preloader-logo { font-size: 5.6rem; letter-spacing: 6px; }
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: var(--color-dark);
+        }
+        .hero-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            transform: scale(1.01);
+        }
+        .hero-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 2;
+            box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg,
+                    rgba(10, 10, 10, 0.75) 0%,
+                    rgba(10, 10, 10, 0.40) 50%,
+                    rgba(10, 10, 10, 0.70) 100%);
+            background-image:
+                repeating-linear-gradient(90deg,
+                    transparent 0px, transparent 3px,
+                    rgba(255, 69, 0, 0.02) 3px, rgba(255, 69, 0, 0.02) 4px),
+                linear-gradient(135deg,
+                    rgba(10, 10, 10, 0.75) 0%,
+                    rgba(10, 10, 10, 0.40) 50%,
+                    rgba(10, 10, 10, 0.70) 100%);
+            background-blend-mode: overlay;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 3;
+            text-align: center;
+            max-width: 860px;
+            padding: 0 24px;
+            animation: heroRise 1.2s cubic-bezier(0.23, 1, 0.32, 1) 0.5s both;
+        }
+        @keyframes heroRise {
+            0% { opacity: 0; transform: translateY(50px) scale(0.97); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .hero-badge {
+            display: inline-block;
+            background: var(--color-primary);
+            color: var(--color-dark);
+            font-weight: 800;
+            font-size: 1.05rem;
+            letter-spacing: 4px;
+            padding: 6px 22px;
+            border-radius: var(--radius-full);
+            text-transform: uppercase;
+            margin-bottom: 28px;
+            box-shadow: 0 0 30px rgba(255, 69, 0, 0.25);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .hero-badge:hover { transform: scale(1.04); box-shadow: 0 0 50px rgba(255, 69, 0, 0.4); }
+
+        .hero-title {
+            font-size: clamp(2.8rem, 14vw, 7.2rem);
+            font-weight: 900;
+            line-height: 1.02;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 18px;
+            text-shadow: 0 4px 30px rgba(0, 0, 0, 0.8), 0 8px 60px rgba(0, 0, 0, 0.5),
+                0 2px 10px rgba(0, 0, 0, 0.4), 0 0 80px rgba(255, 69, 0, 0.08);
+            color: var(--color-light);
+        }
+        .hero-title .highlight {
+            color: var(--color-primary);
+            position: relative;
+            display: inline-block;
+        }
+        .hero-title .highlight::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 4px;
+            width: 100%;
+            height: 5px;
+            background: var(--color-primary);
+            border-radius: 4px;
+            opacity: 0.5;
+            filter: blur(2px);
+        }
+        .hero-desc {
+            font-size: clamp(1rem, 2.2vw, 1.45rem);
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.92);
+            max-width: 640px;
+            margin: 0 auto 38px;
+            line-height: 1.6;
+            letter-spacing: 0.3px;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.6), 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-hero {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 24px 64px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--color-dark);
+            background: var(--color-primary);
+            border: none;
+            border-radius: var(--radius-full);
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+                        box-shadow 0.3s ease,
+                        background 0.3s ease;
+            box-shadow: 0 12px 40px rgba(255, 69, 0, 0.35);
+            user-select: none;
+        }
+        .btn-hero.rumble-sutil {
+            animation: btnRumbleSutil 0.06s infinite alternate ease-in-out;
+        }
+        @keyframes btnRumbleSutil {
+            0%   { transform: translate(-0.15px, -0.15px) rotate(-0.1deg); }
+            25%  { transform: translate(0.15px, 0px) rotate(0.1deg); }
+            50%  { transform: translate(-0.15px, 0.15px) rotate(-0.05deg); }
+            75%  { transform: translate(0.15px, -0.15px) rotate(0.05deg); }
+            100% { transform: translate(0px, 0px) rotate(0deg); }
+        }
+        .btn-hero:hover {
+            transform: scale(1.06);
+            box-shadow: 0 16px 50px rgba(255, 69, 0, 0.5);
+            background: #ff5722;
+        }
+        .btn-hero:active { transform: scale(0.94); }
+        .btn-hero .btn-icon { font-size: 1.6rem; transition: transform 0.3s ease; }
+        .btn-hero:hover .btn-icon { transform: translateX(4px) scale(1.1); }
+        .btn-hero.hidden { display: none !important; }
+
+        /* MAPA DE REEMPLAZO */
+        .map-reemplazo {
+            display: none;
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto 0;
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid rgba(255,69,0,0.3);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            background: #0a0a0a;
+        }
+        .map-reemplazo.visible { display: block; }
+        .map-reemplazo .map-inner { width: 100%; height: 280px; }
+        .map-reemplazo .mensaje {
+            padding: 16px 20px;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--color-primary);
+            background: #111;
+            letter-spacing: 1px;
+            border-top: 1px solid #222;
+        }
+
+        /* ===== MODAL MEJORADO ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: var(--z-modal);
+            background: rgba(0,0,0,0.88);
+            backdrop-filter: blur(12px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            animation: modalFadeIn 0.3s ease;
+        }
+        .modal-overlay.active { display: flex; }
+        @keyframes modalFadeIn {
+            0% { opacity: 0; transform: scale(0.96); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .modal-container {
+            background: #111;
+            border-radius: 28px;
+            max-width: 820px;
+            width: 100%;
+            max-height: 96vh;
+            overflow-y: auto;
+            padding: 32px 30px 40px;
+            border: 1px solid rgba(255,69,0,0.15);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.9), inset 0 0 60px rgba(255,69,0,0.03);
+            position: relative;
+            /* Patrón de fondo sutil de pista */
+            background-image: 
+                repeating-linear-gradient(45deg, 
+                    transparent 0px, 
+                    transparent 20px, 
+                    rgba(255,69,0,0.02) 20px, 
+                    rgba(255,69,0,0.02) 21px),
+                repeating-linear-gradient(-45deg, 
+                    transparent 0px, 
+                    transparent 20px, 
+                    rgba(255,69,0,0.02) 20px, 
+                    rgba(255,69,0,0.02) 21px),
+                radial-gradient(circle at 20% 80%, rgba(255,69,0,0.03) 0%, transparent 60%),
+                radial-gradient(circle at 80% 20%, rgba(255,69,0,0.03) 0%, transparent 60%);
+        }
+        /* Líneas de velocidad sutiles */
+        .modal-container::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: 
+                repeating-linear-gradient(90deg,
+                    transparent 0px,
+                    transparent 40px,
+                    rgba(255,69,0,0.015) 40px,
+                    rgba(255,69,0,0.015) 41px,
+                    transparent 41px,
+                    transparent 80px);
+            border-radius: 28px;
+            z-index: 0;
+        }
+        .modal-container > * { position: relative; z-index: 1; }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #aaa;
+            font-size: 1.8rem;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .modal-close:hover { color: var(--color-primary); border-color: var(--color-primary); background: rgba(255,69,0,0.1); transform: rotate(90deg); }
+
+        .modal-progress {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 28px;
+            justify-content: center;
+            z-index: 2;
+        }
+        .modal-progress .step-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #2a2a2a;
+            transition: all 0.4s ease;
+            border: 2px solid transparent;
+        }
+        .modal-progress .step-dot.active { 
+            background: var(--color-primary); 
+            border-color: var(--color-primary);
+            box-shadow: 0 0 20px rgba(255,69,0,0.4);
+        }
+        .modal-progress .step-dot.done { background: #555; border-color: #555; }
+
+        .modal-step {
+            display: none;
+            animation: stepSlide 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .modal-step.active { display: block; }
+        @keyframes stepSlide {
+            0% { opacity: 0; transform: translateX(24px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+        .modal-step h2 {
+            font-size: clamp(1.3rem, 2.8vw, 2rem);
+            margin-bottom: 22px;
+            color: var(--color-light);
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+        .modal-step h2 span { color: var(--color-primary); }
+
+        /* ===== CALENDARIO CON NEÓN ===== */
+        .calendar-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 10px;
+        }
+        .calendar-nav button {
+            background: #222;
+            border: 1px solid #333;
+            color: #fff;
+            font-size: 1.4rem;
+            padding: 4px 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 700;
+        }
+        .calendar-nav button:hover { background: var(--color-primary); color: #000; border-color: var(--color-primary); }
+        .calendar-nav span {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #ddd;
+            letter-spacing: 1px;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            margin: 16px 0;
+        }
+        .calendar-grid .day-label {
+            text-align: center;
+            font-weight: 600;
+            color: #888;
+            font-size: 0.75rem;
+            padding: 6px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .calendar-grid .day-cell {
+            text-align: center;
+            padding: 10px 0;
+            border-radius: 10px;
+            background: #1a1a1a;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border: 1px solid transparent;
+        }
+        .calendar-grid .day-cell:hover { 
+            background: #2a2a2a; 
+            transform: scale(1.05);
+            border-color: rgba(255,69,0,0.2);
+        }
+        .calendar-grid .day-cell.selected { 
+            background: var(--color-primary); 
+            color: #000;
+            border-color: var(--color-primary);
+            box-shadow: 0 0 25px rgba(255,69,0,0.35), inset 0 0 15px rgba(255,69,0,0.1);
+        }
+        .calendar-grid .day-cell.empty { background: transparent; cursor: default; }
+        .calendar-grid .day-cell.disabled { 
+            opacity: 0.25; 
+            cursor: not-allowed;
+            background: transparent;
+        }
+
+        .horarios-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 16px;
+            justify-content: center;
+            max-height: 180px;
+            overflow-y: auto;
+            padding: 4px;
+        }
+        .horario-slot {
+            background: #1a1a1a;
+            padding: 10px 20px;
+            border-radius: 40px;
+            border: 1px solid #333;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 0.85rem;
+            min-width: 70px;
+            text-align: center;
+            color: #ccc;
+        }
+        .horario-slot:hover { 
+            border-color: var(--color-primary); 
+            background: #252525; 
+            transform: scale(1.04);
+            color: #fff;
+        }
+        .horario-slot.selected { 
+            border-color: var(--color-primary); 
+            background: var(--color-primary); 
+            color: #000;
+            box-shadow: 0 0 20px rgba(255,69,0,0.25);
+        }
+
+        /* ===== TARJETAS DE DURACIÓN REDISEÑADAS ===== */
+        .cards-duracion {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin: 16px 0;
+        }
+        .card-duracion {
+            background: linear-gradient(145deg, #1a1a1a, #141414);
+            border-radius: 18px;
+            padding: 20px 26px;
+            border: 1.5px solid #2a2a2a;
+            cursor: pointer;
+            transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        .card-duracion::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(255,69,0,0.05), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .card-duracion:hover { 
+            border-color: rgba(255,69,0,0.4); 
+            transform: scale(1.01);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+        }
+        .card-duracion:hover::before { opacity: 1; }
+        .card-duracion.selected { 
+            border-color: var(--color-primary);
+            background: linear-gradient(145deg, #1e1e1e, #161616);
+            box-shadow: 0 0 35px rgba(255,69,0,0.15), inset 0 0 30px rgba(255,69,0,0.03);
+        }
+        .card-duracion .tiempo { 
+            font-weight: 800; 
+            font-size: 1.15rem;
+            color: #fff;
+            letter-spacing: -0.3px;
+        }
+        .card-duracion .badge {
+            background: var(--color-primary);
+            color: #000;
+            padding: 3px 14px;
+            border-radius: 40px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 15px rgba(255,69,0,0.2);
+        }
+        .card-duracion .precio { 
+            font-weight: 700; 
+            color: var(--color-primary);
+            font-size: 1.05rem;
+            letter-spacing: -0.2px;
+        }
+        .card-duracion .precio small {
+            font-weight: 400;
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        /* ===== FORMULARIO ===== */
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #bbb;
+            font-size: 0.9rem;
+            letter-spacing: 0.3px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 14px 18px;
+            border-radius: 14px;
+            border: 1.5px solid #2a2a2a;
+            background: #0e0e0e;
+            color: #fff;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        .form-group input:focus { 
+            border-color: var(--color-primary); 
+            outline: none;
+            box-shadow: 0 0 25px rgba(255,69,0,0.08);
+            background: #121212;
+        }
+        .form-group .note {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        /* ===== MAPA EN MODAL ===== */
+        .map-container-modal {
+            width: 100%;
+            height: 220px;
+            border-radius: 16px;
+            overflow: hidden;
+            margin: 16px 0;
+            border: 1px solid #2a2a2a;
+            background: #0a0a0a;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.5);
+        }
+        .map-container-modal .leaflet-control-zoom a { background: #1a1a1a; color: #eee; border-color: #333; }
+        .map-container-modal .leaflet-control-zoom a:hover { background: var(--color-primary); color: #000; }
+
+        .map-typewriter {
+            font-size: clamp(0.9rem, 1.6vw, 1.2rem);
+            color: #aaa;
+            margin-bottom: 8px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            border-right: 2px solid var(--color-primary);
+            display: inline-block;
+            padding-right: 6px;
+            animation: blinkCursor 0.8s step-end infinite;
+        }
+        @keyframes blinkCursor {
+            0%, 100% { border-color: var(--color-primary); }
+            50% { border-color: transparent; }
+        }
+
+        /* ===== BOTÓN FINAL CON PULSO INTENSO ===== */
+        .btn-final {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.5rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            background: var(--color-primary);
+            color: #000;
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 35px rgba(255,69,0,0.3);
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 1.5px;
+            animation: btnPulse 2s ease-in-out infinite;
+        }
+        @keyframes btnPulse {
+            0%, 100% { box-shadow: 0 8px 35px rgba(255,69,0,0.3); transform: scale(1); }
+            50% { box-shadow: 0 8px 50px rgba(255,69,0,0.6), 0 0 80px rgba(255,69,0,0.15); transform: scale(1.01); }
+        }
+        .btn-final:hover { 
+            transform: scale(1.02); 
+            box-shadow: 0 12px 50px rgba(255,69,0,0.5);
+            animation: none;
+        }
+        .btn-final:active { transform: scale(0.96); }
+        .btn-final:disabled { 
+            opacity: 0.5; 
+            cursor: not-allowed; 
+            transform: none;
+            animation: none;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .modal-container { 
+                padding: 24px 16px 30px; 
+                max-width: 98%;
+                border-radius: 20px;
+                max-height: 98vh;
+            }
+            .modal-close { top: 12px; right: 14px; width: 38px; height: 38px; font-size: 1.4rem; }
+            .hero-title { font-size: clamp(2.2rem, 10vw, 3.8rem); }
+            .hero-desc { font-size: clamp(0.9rem, 2.5vw, 1.1rem); }
+            .btn-hero { padding: 18px 36px; font-size: 1.1rem; }
+            .hero-badge { font-size: 0.9rem; padding: 4px 16px; }
+            .card-duracion { flex-direction: column; align-items: stretch; gap: 6px; padding: 16px 20px; }
+            .card-duracion .tiempo { font-size: 1rem; }
+            .map-reemplazo .map-inner { height: 200px; }
+            .btn-final { font-size: 1.2rem; padding: 16px; }
+        }
+        @media (max-width: 480px) {
+            .modal-container { padding: 18px 12px 24px; border-radius: 16px; }
+            .modal-close { top: 10px; right: 10px; width: 34px; height: 34px; font-size: 1.2rem; }
+            .hero-title { font-size: clamp(1.8rem, 9vw, 2.6rem); }
+            .hero-desc { font-size: 1.1rem; margin-bottom: 28px; }
+            .btn-hero { padding: 14px 24px; font-size: 0.9rem; width: 100%; max-width: 280px; justify-content: center; }
+            .hero-badge { font-size: 0.7rem; padding: 3px 12px; }
+            .calendar-grid .day-cell { padding: 8px 0; font-size: 0.75rem; }
+            .horario-slot { padding: 8px 14px; font-size: 0.7rem; min-width: 55px; }
+            .map-reemplazo .map-inner { height: 160px; }
+            .map-reemplazo .mensaje { font-size: 1rem; padding: 12px; }
+            .btn-final { font-size: 1rem; padding: 14px; }
+            .card-duracion { padding: 14px 16px; }
+            .card-duracion .tiempo { font-size: 0.9rem; }
+            .card-duracion .precio { font-size: 0.9rem; }
+            .modal-step h2 { font-size: 1.1rem; }
+            .map-container-modal { height: 160px; }
+        }
+        @media (min-width: 768px) {
+            .hero-desc { font-size: 1.5rem; max-width: 740px; }
+            .hero-badge { font-size: 2.25rem; padding: 8px 32px; }
+            .btn-hero { padding: 28px 72px; font-size: 1.6rem; }
+            .hero-title { font-size: clamp(3.5rem, 8vw, 6rem); }
+            .cards-duracion { flex-direction: row; }
+            .card-duracion { flex: 1; }
+            .modal-container { max-width: 820px; }
+        }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: var(--color-dark); }
+        ::-webkit-scrollbar-thumb { background: var(--color-primary); border-radius: 4px; }
+
+        /* ===== PARTÍCULAS Y EFECTOS ===== */
+        .particle-mud {
+            position: fixed;
+            pointer-events: none;
+            z-index: 99999;
+            border-radius: 50% 50% 50% 0;
+            background: #6B4226;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            animation: mudFly 0.9s cubic-bezier(0.2, 0.8, 0.3, 1.2) forwards;
+        }
+        .particle-mud:nth-child(odd) { background: #8B5A2B; border-radius: 50% 50% 0 50%; }
+        .particle-mud:nth-child(3n) { background: #A67B5B; border-radius: 40% 60% 50% 30%; }
+        .particle-mud:nth-child(5n+1) { background: var(--color-primary); border-radius: 60% 40% 30% 50%; box-shadow: 0 0 20px rgba(255, 69, 0, 0.3); }
+        @keyframes mudFly {
+            0% { opacity: 1; transform: translate(0, 0) scale(1) rotate(0deg); }
+            100% { opacity: 0; transform: translate(var(--tx), var(--ty)) scale(0.15) rotate(720deg); }
+        }
+        .go-kart-flash {
+            position: fixed;
+            inset: 0;
+            z-index: 99998;
+            background: var(--color-primary);
+            pointer-events: none;
+            opacity: 0;
+            animation: kartFlash 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+        }
+        @keyframes kartFlash {
+            0% { opacity: 0; transform: scale(0.8); }
+            20% { opacity: 0.9; transform: scale(1); }
+            60% { opacity: 0.6; transform: scale(1.02); }
+            100% { opacity: 0; transform: scale(1.1); }
+        }
+        .btn-hero .btn-ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(0);
+            animation: rippleOut 0.7s ease-out forwards;
+            pointer-events: none;
+        }
+        @keyframes rippleOut { to { transform: scale(4); opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <!-- PRELOADER -->
+    <div id="preloader" role="status">
+        <div class="preloader-content">
+            <div class="preloader-wheel" aria-hidden="true"></div>
+            <div class="preloader-logo">Verti<span class="highlight">Go</span>Karts</div>
+        </div>
+    </div>
+
+    <!-- APP -->
+    <div id="app" role="main">
+        <section class="hero" id="heroSection">
+            <video class="hero-video" id="heroVideo" muted loop playsinline preload="metadata"
+                poster="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Crect width='100' height='100' fill='%230A0A0A'/%3E%3C/svg%3E"
+                aria-label="Fondo de pista de karts en Manizales">
+                <source src="Video/Video-experiencia.mp4" type="video/mp4">
+                Tu navegador no soporta video HTML5.
+            </video>
+            <div class="hero-overlay" aria-hidden="true"></div>
+            <div class="hero-content">
+                <div class="hero-badge">🏁 Manizales · Villamaria</div>
+                <h1 class="hero-title"><span class="highlight">Un parche</span> Único</h1>
+                <p class="hero-desc">Cargado de adrenalina y pura diversión, ¡no esperes más!</p>
+                <button class="btn-hero rumble-sutil" id="btnHero" aria-label="Reservar tu kart ahora">
+                    <span class="btn-icon">🏎️</span>
+                    <span class="btn-text">Reservar Ahora</span>
+                </button>
+                <div class="map-reemplazo" id="mapReemplazo">
+                    <div class="map-inner" id="mapReemplazoInner"></div>
+                    <div class="mensaje">🏁 ¡Prepárate para la experiencia más pro!</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- MODAL DE RESERVA -->
+    <div class="modal-overlay" id="modalReserva">
+        <div class="modal-container">
+            <button class="modal-close" id="modalClose">✕</button>
+            <div class="modal-progress" id="modalProgress">
+                <span class="step-dot active" data-step="1"></span>
+                <span class="step-dot" data-step="2"></span>
+                <span class="step-dot" data-step="3"></span>
+                <span class="step-dot" data-step="4"></span>
+            </div>
+
+            <!-- STEP 1: Fecha y Hora -->
+            <div class="modal-step active" data-step="1">
+                <h2>Iniciemos... <span>Elige fecha y hora</span></h2>
+                <div class="calendar-nav">
+                    <button id="calPrev">‹</button>
+                    <span id="calMonthYear"></span>
+                    <button id="calNext">›</button>
+                </div>
+                <div id="calendarContainer"></div>
+                <div class="horarios-container" id="horariosContainer">
+                    <span style="color:#666;width:100%;text-align:center;font-size:0.85rem;">Selecciona un día primero</span>
+                </div>
+            </div>
+
+            <!-- STEP 2: Duración -->
+            <div class="modal-step" data-step="2">
+                <h2>¿Cuánto tiempo <span>deseas correr</span>?</h2>
+                <div class="cards-duracion" id="duracionContainer">
+                    <div class="card-duracion" data-duracion="15">
+                        <span class="tiempo">15 min</span>
+                        <span class="badge">Novato Aficionado</span>
+                        <span class="precio">$30.000 <small>/ persona</small></span>
+                    </div>
+                    <div class="card-duracion" data-duracion="30">
+                        <span class="tiempo">30 min</span>
+                        <span class="badge">Profeta de la Pista</span>
+                        <span class="precio">$50.000 <small>/ persona</small></span>
+                    </div>
+                    <div class="card-duracion" data-duracion="60">
+                        <span class="tiempo">60 min</span>
+                        <span class="badge">Jefe Maestro</span>
+                        <span class="precio">$80.000 <small>/ persona</small></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: Datos de los pilotos -->
+            <div class="modal-step" data-step="3">
+                <h2>Solo un poco más...</h2>
+                <div class="form-group">
+                    <label>Nombre del piloto *</label>
+                    <input type="text" id="inputName" placeholder="Ej: Carlos Pérez">
+                </div>
+                <div class="form-group">
+                    <label>Teléfono / WhatsApp *</label>
+                    <input type="tel" id="inputPhone" placeholder="3001234567">
+                    <div class="note">➕ Se agregará automáticamente el prefijo +57</div>
+                </div>
+                <div class="form-group">
+                    <label>Correo electrónico *</label>
+                    <input type="email" id="inputEmail" placeholder="correo@ejemplo.com">
+                </div>
+                <div class="form-group">
+                    <label>Número de pilotos *</label>
+                    <input type="number" id="inputPilotos" placeholder="2" min="1" max="6">
+                    <div class="note">🏎️ Tenemos 6 máquinas disponibles en pista</div>
+                </div>
+                <div style="text-align:right;margin-top:8px;">
+                    <button class="btn-final" style="width:auto;padding:12px 40px;font-size:1rem;animation:none;" id="btnAvanzarPaso3">Continuar →</button>
+                </div>
+            </div>
+
+            <!-- STEP 4: Mapa + Envío -->
+            <div class="modal-step" data-step="4">
+                <h2><span class="map-typewriter" id="mapTypewriter">Un vistazo a dónde estamos...</span></h2>
+                <div class="map-container-modal" id="mapModalContainer"></div>
+                <button class="btn-final" id="btnFinalReserva">¡Listo, a correr!</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ===== CONFIGURACIÓN =====
+            const AUDIO_RUTA = 'Musica/Audio-VertiGo.mp3';
+            // Ubicación CORREGIDA: Barrio La Florida, Manizales (cerca de Villamaría)
+            const LAT = 5.03385;
+            const LNG = -75.4850;
+            const WEBHOOK_URL = 'https://hook.us2.make.com/9biw6sfodeasklyabew55xgl8z49kx9w';
+
+            // ===== ELEMENTOS DOM =====
+            const btnHero = document.getElementById('btnHero');
+            const mapReemplazo = document.getElementById('mapReemplazo');
+            const mapReemplazoInner = document.getElementById('mapReemplazoInner');
+            const modalOverlay = document.getElementById('modalReserva');
+            const modalClose = document.getElementById('modalClose');
+            const modalSteps = document.querySelectorAll('.modal-step');
+            const dots = document.querySelectorAll('.step-dot');
+            const calendarContainer = document.getElementById('calendarContainer');
+            const horariosContainer = document.getElementById('horariosContainer');
+            const duracionContainer = document.getElementById('duracionContainer');
+            const inputName = document.getElementById('inputName');
+            const inputPhone = document.getElementById('inputPhone');
+            const inputEmail = document.getElementById('inputEmail');
+            const inputPilotos = document.getElementById('inputPilotos');
+            const btnFinal = document.getElementById('btnFinalReserva');
+            const btnAvanzarPaso3 = document.getElementById('btnAvanzarPaso3');
+            const calPrev = document.getElementById('calPrev');
+            const calNext = document.getElementById('calNext');
+            const calMonthYear = document.getElementById('calMonthYear');
+
+            // ===== ESTADO GLOBAL =====
+            let currentStep = 1;
+            let selectedDate = null;
+            let selectedTime = null;
+            let selectedDuration = null;
+            let mapReemplazoInstance = null;
+            let modalMapInstance = null;
+            let calYear = new Date().getFullYear();
+            let calMonth = new Date().getMonth();
+
+            // ===== LOCALSTORAGE =====
+            const yaReservo = localStorage.getItem('vertigo_reservado') === 'true';
+            if (yaReservo) {
+                btnHero.classList.add('hidden');
+                mapReemplazo.classList.add('visible');
+                setTimeout(initMapReemplazo, 400);
+            }
+
+            // ===== FUNCIÓN DE SONIDO =====
+            function reproducirSonido() {
+                try {
+                    const audio = new Audio(AUDIO_RUTA);
+                    audio.volume = 0.8;
+                    audio.play().catch(function() {});
+                } catch (e) {}
+            }
+
+            // ===== MAPA DE REEMPLAZO =====
+            function initMapReemplazo() {
+                if (mapReemplazoInstance) return;
+                if (!mapReemplazoInner) return;
+                mapReemplazoInstance = L.map(mapReemplazoInner, {
+                    center: [LAT, LNG],
+                    zoom: 16,
+                    zoomControl: true,
+                    scrollWheelZoom: false
+                });
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap',
+                    maxZoom: 19
+                }).addTo(mapReemplazoInstance);
+
+                L.marker([LAT, LNG], { title: 'VertiGo Karts' })
+                    .addTo(mapReemplazoInstance)
+                    .bindPopup('🏁 VertiGo Karts<br>Barrio La Florida, Manizales<br>Cerca a Villamaría');
+
+                L.circle([LAT, LNG], {
+                    color: '#FF4500',
+                    fillColor: '#FF4500',
+                    fillOpacity: 0.25,
+                    radius: 80,
+                    weight: 3,
+                    opacity: 0.8,
+                    className: 'pulsing-circle-reemplazo'
+                }).addTo(mapReemplazoInstance);
+
+                if (!document.getElementById('mapReemplazoStyles')) {
+                    const style = document.createElement('style');
+                    style.id = 'mapReemplazoStyles';
+                    style.textContent = `
+                        .pulsing-circle-reemplazo {
+                            animation: pulseReemplazo 1.2s ease-in-out infinite;
+                        }
+                        @keyframes pulseReemplazo {
+                            0% { opacity: 0.3; transform: scale(0.95); }
+                            50% { opacity: 0.9; transform: scale(1.1); }
+                            100% { opacity: 0.3; transform: scale(0.95); }
+                        }
+                        .leaflet-control-zoom a { background: #1a1a1a !important; color: #eee !important; border-color: #333 !important; }
+                    `;
+                    document.head.appendChild(style);
+                }
+                setTimeout(() => mapReemplazoInstance.invalidateSize(), 300);
+            }
+
+            // ===== NAVEGACIÓN DE PASOS =====
+            function goToStep(step) {
+                currentStep = step;
+                modalSteps.forEach((el, i) => {
+                    el.classList.toggle('active', i + 1 === step);
+                });
+                dots.forEach((dot, i) => {
+                    dot.classList.toggle('active', i + 1 === step);
+                    dot.classList.toggle('done', i + 1 < step);
+                });
+                if (step === 4) {
+                    setTimeout(initModalMap, 200);
+                }
+            }
+
+            function nextStep() {
+                if (currentStep < 4) goToStep(currentStep + 1);
+            }
+
+            // ===== CALENDARIO =====
+            function renderCalendar(year, month) {
+                const now = new Date();
+                const today = now.getDate();
+                const currentYear = now.getFullYear();
+                const currentMonth = now.getMonth();
+
+                const firstDay = new Date(year, month, 1).getDay();
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+                const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+                calMonthYear.textContent = `${monthNames[month]} ${year}`;
+
+                let html = '<div class="calendar-grid">';
+                const labels = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+                labels.forEach(l => html += `<div class="day-label">${l}</div>`);
+
+                for (let i = 0; i < firstDay; i++) {
+                    html += '<div class="day-cell empty"></div>';
+                }
+
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const isPast = (year < currentYear) || 
+                                  (year === currentYear && month < currentMonth) ||
+                                  (year === currentYear && month === currentMonth && d < today);
+                    const isTooFar = year > currentYear + 3;
+                    const disabled = isPast || isTooFar;
+                    const isToday = (year === currentYear && month === currentMonth && d === today);
+                    const cls = disabled ? 'day-cell disabled' : 'day-cell' + (isToday ? ' selected' : '');
+                    html += `<div class="${cls}" data-day="${d}">${d}</div>`;
+                }
+                html += '</div>';
+                calendarContainer.innerHTML = html;
+
+                document.querySelectorAll('.day-cell:not(.disabled):not(.empty)').forEach(el => {
+                    el.addEventListener('click', function() {
+                        document.querySelectorAll('.day-cell').forEach(c => c.classList.remove('selected'));
+                        this.classList.add('selected');
+                        const day = parseInt(this.dataset.day);
+                        selectedDate = new Date(year, month, day);
+                        renderHorarios();
+                    });
+                });
+
+                if (selectedDate && selectedDate.getMonth() === month && selectedDate.getFullYear() === year) {
+                    const dayEl = document.querySelector(`.day-cell[data-day="${selectedDate.getDate()}"]`);
+                    if (dayEl && !dayEl.classList.contains('disabled')) {
+                        dayEl.classList.add('selected');
+                        renderHorarios();
+                    }
+                }
+            }
+
+            calPrev.addEventListener('click', function() {
+                calMonth--;
+                if (calMonth < 0) { calMonth = 11; calYear--; }
+                renderCalendar(calYear, calMonth);
+            });
+
+            calNext.addEventListener('click', function() {
+                calMonth++;
+                if (calMonth > 11) { calMonth = 0; calYear++; }
+                renderCalendar(calYear, calMonth);
+            });
+
+            // ===== HORARIOS CADA 15 MIN =====
+            function renderHorarios() {
+                const slots = [];
+                for (let h = 10; h <= 12; h++) {
+                    for (let m = 0; m < 60; m += 15) {
+                        if (h === 12 && m > 0) break;
+                        slots.push(String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));
+                    }
+                }
+                for (let h = 14; h <= 17; h++) {
+                    for (let m = 0; m < 60; m += 15) {
+                        if (h === 17 && m > 0) break;
+                        slots.push(String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0'));
+                    }
+                }
+
+                let html = '';
+                slots.forEach(s => {
+                    html += `<div class="horario-slot" data-time="${s}">${s}</div>`;
+                });
+                horariosContainer.innerHTML = html;
+
+                document.querySelectorAll('.horario-slot').forEach(el => {
+                    el.addEventListener('click', function() {
+                        document.querySelectorAll('.horario-slot').forEach(c => c.classList.remove('selected'));
+                        this.classList.add('selected');
+                        selectedTime = this.dataset.time;
+                        if (selectedDate) {
+                            nextStep();
+                        } else {
+                            alert('Primero selecciona una fecha en el calendario.');
+                        }
+                    });
+                });
+            }
+
+            // ===== DURACIÓN =====
+            document.querySelectorAll('.card-duracion').forEach(card => {
+                card.addEventListener('click', function() {
+                    document.querySelectorAll('.card-duracion').forEach(c => c.classList.remove('selected'));
+                    this.classList.add('selected');
+                    selectedDuration = parseInt(this.dataset.duracion);
+                    if (selectedDuration > 0) {
+                        nextStep();
+                    }
+                });
+            });
+
+            // ===== VALIDACIÓN +57 =====
+            function formatPhone(phone) {
+                let cleaned = phone.replace(/\D/g, '');
+                if (cleaned.startsWith('57')) return cleaned;
+                if (cleaned.length === 10) return '57' + cleaned;
+                return cleaned;
+            }
+
+            // ===== AVANZAR PASO 3 → PASO 4 =====
+            btnAvanzarPaso3.addEventListener('click', function() {
+                if (!selectedDate) {
+                    alert('Por favor selecciona una fecha en el calendario (Paso 1).');
+                    goToStep(1);
+                    return;
+                }
+                if (!selectedTime) {
+                    alert('Por favor selecciona una hora disponible (Paso 1).');
+                    goToStep(1);
+                    return;
+                }
+                if (!selectedDuration) {
+                    alert('Por favor selecciona la duración de la carrera (Paso 2).');
+                    goToStep(2);
+                    return;
+                }
+
+                const name = inputName.value.trim();
+                const phoneRaw = inputPhone.value.trim();
+                const email = inputEmail.value.trim();
+                const pilotos = parseInt(inputPilotos.value);
+
+                if (!name || !phoneRaw || !email || !pilotos || pilotos < 1) {
+                    alert('Por favor completa todos los campos del formulario correctamente.');
+                    return;
+                }
+                const phone = formatPhone(phoneRaw);
+                if (phone.length < 10) {
+                    alert('Teléfono inválido. Asegúrate de ingresar un número válido (ej: 3001234567).');
+                    return;
+                }
+                
+                console.log('✅ Avanzando al Paso 4 con:', { selectedDate, selectedTime, selectedDuration });
+                nextStep();
+            });
+
+            // ===== ENVÍO FINAL A MAKE WEBHOOK =====
+            btnFinal.addEventListener('click', function() {
+                if (!selectedDate || !selectedTime || !selectedDuration) {
+                    alert('Por favor completa todos los pasos anteriores (Fecha, Hora y Duración).');
+                    return;
+                }
+
+                const name = inputName.value.trim();
+                const phoneRaw = inputPhone.value.trim();
+                const email = inputEmail.value.trim();
+                const pilotos = parseInt(inputPilotos.value);
+
+                if (!name || !phoneRaw || !email || isNaN(pilotos) || pilotos < 1) {
+                    alert('Por favor completa todos los campos del formulario correctamente.');
+                    return;
+                }
+
+                const phone = formatPhone(phoneRaw);
+                if (phone.length < 10) {
+                    alert('Teléfono inválido. Ingresa un número válido (ej: 3001234567).');
+                    return;
+                }
+
+                const yyyy = selectedDate.getFullYear();
+                const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
+                const dd = String(selectedDate.getDate()).padStart(2, '0');
+                const fechaIso = `${yyyy}-${mm}-${dd}`;
+
+                const payload = {
+                    nombre_lider: name,
+                    telefono: '+' + phone,
+                    correo_cliente: email,
+                    numero_pilotos: pilotos,
+                    fecha_reserva: fechaIso,
+                    hora_reserva: selectedTime + ':00',
+                    fecha_hora_inicio: `${fechaIso}T${selectedTime}:00`,
+                    duracion_minutos: selectedDuration,
+                    origen: "Web VertiGo Karts"
+                };
+
+                console.log('📦 Enviando a Make Webhook:', payload);
+
+                btnFinal.disabled = true;
+                btnFinal.textContent = 'Enviando reserva...';
+
+                fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                })
+                .then(res => {
+                    localStorage.setItem('vertigo_reservado', 'true');
+                    btnHero.classList.add('hidden');
+                    mapReemplazo.classList.add('visible');
+                    initMapReemplazo();
+                    modalOverlay.classList.remove('active');
+                    alert('¡Reserva registrada con éxito! Revisa tu correo electrónico.');
+                    window.location.reload();
+                })
+                .catch(err => {
+                    console.error('Error al enviar a Make:', err);
+                    alert('Hubo un error al enviar tu reserva. Inténtalo de manera directa.');
+                    btnFinal.disabled = false;
+                    btnFinal.textContent = '¡Listo, a correr!';
+                });
+            });
+
+            // ===== MODAL: ABRIR / CERRAR =====
+            btnHero.addEventListener('click', function(e) {
+                if (localStorage.getItem('vertigo_reservado') === 'true') return;
+                
+                reproducirSonido();
+
+                this.classList.remove('rumble-sutil');
+                this.classList.add('rumble-fuerte');
+                setTimeout(() => {
+                    this.classList.remove('rumble-fuerte');
+                    this.classList.add('push-down');
+                    setTimeout(() => {
+                        this.classList.remove('push-down');
+                        this.classList.add('rumble-sutil');
+                    }, 500);
+                }, 300);
+
+                const rect = this.getBoundingClientRect();
+                const cx = e.clientX || (rect.left + rect.width / 2);
+                const cy = e.clientY || (rect.top + rect.height / 2);
+                for (let i = 0; i < 20; i++) {
+                    const p = document.createElement('div');
+                    p.className = 'particle-mud';
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 30 + Math.random() * 120;
+                    p.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+                    p.style.setProperty('--ty', Math.sin(angle) * dist - 20 + 'px');
+                    const size = 6 + Math.random() * 16;
+                    p.style.width = size + 'px';
+                    p.style.height = size + 'px';
+                    p.style.left = cx + 'px';
+                    p.style.top = cy + 'px';
+                    p.style.transform = 'translate(-50%, -50%) rotate(' + (Math.random() * 360) + 'deg)';
+                    document.body.appendChild(p);
+                    setTimeout(() => p.remove(), 900);
+                }
+
+                const flash = document.createElement('div');
+                flash.className = 'go-kart-flash';
+                document.body.appendChild(flash);
+                setTimeout(() => flash.remove(), 600);
+
+                modalOverlay.classList.add('active');
+                goToStep(1);
+                
+                const now = new Date();
+                calYear = now.getFullYear();
+                calMonth = now.getMonth();
+                renderCalendar(calYear, calMonth);
+                
+                selectedDate = null;
+                selectedTime = null;
+                selectedDuration = null;
+                document.querySelectorAll('.card-duracion').forEach(c => c.classList.remove('selected'));
+                document.querySelectorAll('.horario-slot').forEach(c => c.classList.remove('selected'));
+                inputName.value = '';
+                inputPhone.value = '';
+                inputEmail.value = '';
+                inputPilotos.value = '';
+                btnFinal.disabled = false;
+                btnFinal.textContent = '¡Listo, a correr!';
+            });
+
+            modalClose.addEventListener('click', function() {
+                modalOverlay.classList.remove('active');
+            });
+            modalOverlay.addEventListener('click', function(e) {
+                if (e.target === this) modalOverlay.classList.remove('active');
+            });
+
+            // ===== MAPA EN MODAL (PASO 4) =====
+            function initModalMap() {
+                const container = document.getElementById('mapModalContainer');
+                if (!container) return;
+                if (modalMapInstance) {
+                    modalMapInstance.invalidateSize();
+                    return;
+                }
+                modalMapInstance = L.map(container, {
+                    center: [LAT, LNG],
+                    zoom: 16,
+                    zoomControl: true,
+                    scrollWheelZoom: true
+                });
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; OpenStreetMap',
+                    maxZoom: 19
+                }).addTo(modalMapInstance);
+
+                L.marker([LAT, LNG], { title: 'VertiGo Karts' })
+                    .addTo(modalMapInstance)
+                    .bindPopup('🏁 VertiGo Karts<br>Barrio La Florida, Manizales<br>Cerca a Villamaría');
+
+                L.circle([LAT, LNG], {
+                    color: '#FF4500',
+                    fillColor: '#FF4500',
+                    fillOpacity: 0.2,
+                    radius: 80,
+                    weight: 3,
+                    opacity: 0.8,
+                    className: 'pulsing-circle-modal'
+                }).addTo(modalMapInstance);
+
+                if (!document.getElementById('modalMapStyles')) {
+                    const style = document.createElement('style');
+                    style.id = 'modalMapStyles';
+                    style.textContent = `
+                        .pulsing-circle-modal {
+                            animation: pulseModal 1.2s ease-in-out infinite;
+                        }
+                        @keyframes pulseModal {
+                            0% { opacity: 0.3; transform: scale(0.95); }
+                            50% { opacity: 0.9; transform: scale(1.1); }
+                            100% { opacity: 0.3; transform: scale(0.95); }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+                setTimeout(() => modalMapInstance.invalidateSize(), 300);
+            }
+
+            // ===== PRELOADER Y VIDEO =====
+            (function preloaderController() {
+                const preloader = document.getElementById('preloader');
+                const app = document.getElementById('app');
+                if (!preloader || !app) return;
+                preloader.classList.remove('hidden');
+                setTimeout(function() {
+                    preloader.classList.add('hidden');
+                    app.classList.add('visible');
+                    setTimeout(function() {
+                        preloader.style.display = 'none';
+                        document.body.style.overflow = 'auto';
+                        document.body.style.height = 'auto';
+                    }, 800);
+                }, 1000);
+            })();
+
+            (function initVideo() {
+                const video = document.getElementById('heroVideo');
+                if (!video) return;
+                const tryPlay = function() {
+                    video.play().catch(function() {});
+                };
+                if ('IntersectionObserver' in window) {
+                    const obs = new IntersectionObserver(function(entries) {
+                        entries.forEach(function(entry) {
+                            if (entry.isIntersecting) { tryPlay(); obs.unobserve(video); }
+                        });
+                    }, { threshold: 0.2 });
+                    obs.observe(video);
+                } else { tryPlay(); }
+            })();
+
+            // Favicon
+            (function createFavicon() {
+                const svgNS = 'http://www.w3.org/2000/svg';
+                const svg = document.createElementNS(svgNS, 'svg');
+                svg.setAttribute('viewBox', '0 0 64 64');
+                svg.setAttribute('width', '64');
+                svg.setAttribute('height', '64');
+                const bg = document.createElementNS(svgNS, 'rect');
+                bg.setAttribute('width', '64');
+                bg.setAttribute('height', '64');
+                bg.setAttribute('fill', '#0A0A0A');
+                svg.appendChild(bg);
+                const pathV = document.createElementNS(svgNS, 'path');
+                pathV.setAttribute('d', 'M12 12 L32 48 L52 12');
+                pathV.setAttribute('stroke', '#FF4500');
+                pathV.setAttribute('stroke-width', '7');
+                pathV.setAttribute('fill', 'none');
+                pathV.setAttribute('stroke-linecap', 'round');
+                pathV.setAttribute('stroke-linejoin', 'round');
+                svg.appendChild(pathV);
+                const c1 = document.createElementNS(svgNS, 'rect');
+                c1.setAttribute('x', '44');
+                c1.setAttribute('y', '44');
+                c1.setAttribute('width', '16');
+                c1.setAttribute('height', '16');
+                c1.setAttribute('fill', '#FF4500');
+                svg.appendChild(c1);
+                const serialized = new XMLSerializer().serializeToString(svg);
+                const encoded = 'data:image/svg+xml;base64,' + btoa(serialized);
+                const link = document.createElement('link');
+                link.rel = 'icon';
+                link.href = encoded;
+                link.type = 'image/svg+xml';
+                document.head.appendChild(link);
+            })();
+
+            console.log('%c🏁 VertiGoKarts · Ubicación corregida - Barrio La Florida, Manizales', 'font-size:18px; font-weight:900; color:#FF4500;');
+
+            window.VertiGoKarts = {
+                reservar: function() { btnHero.click(); },
+                audio: { play: reproducirSonido }
+            };
+
+        })();
+    </script>
+</body>
+</html>
